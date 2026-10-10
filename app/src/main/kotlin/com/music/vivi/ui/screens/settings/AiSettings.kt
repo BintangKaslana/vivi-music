@@ -38,6 +38,7 @@ import androidx.navigation.NavController
 import com.music.vivi.LocalPlayerAwareWindowInsets
 import com.music.vivi.R
 import com.music.vivi.constants.AiProviderKey
+import com.music.vivi.constants.CustomAiPromptKey
 import com.music.vivi.constants.DeeplApiKey
 import com.music.vivi.constants.DeeplFormalityKey
 import com.music.vivi.constants.LanguageCodeToName
@@ -66,6 +67,8 @@ fun AiSettings(
     var translateMode by rememberPreference(TranslateModeKey, "Literal")
     var deeplApiKey by rememberPreference(DeeplApiKey, "")
     var deeplFormality by rememberPreference(DeeplFormalityKey, "default")
+    var customAiPrompt by rememberPreference(CustomAiPromptKey, "")
+
 
     val aiProviders = mapOf(
         "OpenRouter" to "https://openrouter.ai/api/v1/chat/completions",
@@ -154,6 +157,7 @@ fun AiSettings(
     var showBaseUrlDialog by rememberSaveable { mutableStateOf(false) }
     var showModelDialog by rememberSaveable { mutableStateOf(false) }
     var showCustomModelInput by rememberSaveable { mutableStateOf(false) }
+    var showCustomPromptDialog by rememberSaveable { mutableStateOf(false) }
 
     if (showProviderHelpDialog) {
         AlertDialog(
@@ -371,6 +375,19 @@ fun AiSettings(
         )
     }
 
+    if (showCustomPromptDialog) {
+        TextFieldDialog(
+            title = { Text(stringResource(R.string.ai_custom_prompt)) },
+            icon = { Icon(painterResource(R.drawable.discover_tune), null) },
+            initialTextFieldValue = TextFieldValue(text = customAiPrompt),
+            onDone = {
+                customAiPrompt = it
+                showCustomPromptDialog = false
+            },
+            onDismiss = { showCustomPromptDialog = false }
+        )
+    }
+
     Column(
         Modifier
             .windowInsetsPadding(
@@ -526,6 +543,14 @@ fun AiSettings(
                         title = { Text(stringResource(R.string.ai_target_language)) },
                         trailingContent = { Text(LanguageCodeToName[translateLanguage] ?: translateLanguage) },
                         onClick = { showLanguageDialog = true }
+                    )
+                )
+                add(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.discover_tune),
+                        title = { Text(stringResource(R.string.ai_custom_prompt)) },
+                        trailingContent = { Text(customAiPrompt.ifBlank { stringResource(R.string.not_set) }) },
+                        onClick = { showCustomPromptDialog = true }
                     )
                 )
             }

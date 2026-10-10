@@ -32,7 +32,8 @@ object OpenRouterService {
         model: String,
         mode: String,
         maxRetries: Int = 3,
-        sourceLanguage: String? = null
+        sourceLanguage: String? = null,
+        customAiPrompt: String = ""
     ): Result<List<String>> = withContext(Dispatchers.IO) {
         var currentAttempt = 0
         
@@ -47,7 +48,8 @@ object OpenRouterService {
         while (currentAttempt < maxRetries) {
             try {
                 // Enhanced prompt with strict formatting requirements
-                val systemPrompt = """You are a precise lyrics translation assistant. Your output must ALWAYS be a valid JSON array of strings.
+                val systemPrompt = if (customAiPrompt.isNotBlank()) {
+                    """$customAiPrompt
 
 CRITICAL RULES:
 1. Output ONLY a JSON array: ["line1", "line2", "line3"]
@@ -56,6 +58,17 @@ CRITICAL RULES:
 4. Preserve empty lines as empty strings ""
 5. Return EXACTLY $lineCount items in the array
 6. If uncertain, provide best approximation but maintain line count"""
+                } else {
+                    """You are a precise lyrics translation assistant. Your output must ALWAYS be a valid JSON array of strings.
+
+CRITICAL RULES:
+1. Output ONLY a JSON array: ["line1", "line2", "line3"]
+2. NO explanations, NO questions, NO additional text
+3. Each input line maps to exactly one output line
+4. Preserve empty lines as empty strings ""
+5. Return EXACTLY $lineCount items in the array
+6. If uncertain, provide best approximation but maintain line count"""
+                }
 
                 val userPrompt = when (mode) {
                     "Romanized" -> """Romanize/transliterate the following $lineCount lines into simple Latin script using ONLY basic English letters (a-z, A-Z).

@@ -39,7 +39,8 @@ object OpenRouterStreamingService {
         apiKey: String,
         baseUrl: String,
         model: String,
-        mode: String
+        mode: String,
+        customAiPrompt: String = ""
     ): Flow<StreamChunk> = flow {
         if (text.isBlank()) {
             emit(StreamChunk.Error("Input text is empty"))
@@ -52,7 +53,8 @@ object OpenRouterStreamingService {
         Timber.d("Starting streaming translation for $lineCount lines")
 
         try {
-            val systemPrompt = """You are a precise lyrics translation assistant. Your output must ALWAYS be a valid JSON array of strings.
+            val systemPrompt = if (customAiPrompt.isNotBlank()) {
+                """$customAiPrompt
 
 CRITICAL RULES:
 1. Output ONLY a JSON array: ["line1", "line2", "line3"]
@@ -61,6 +63,17 @@ CRITICAL RULES:
 4. Preserve empty lines as empty strings ""
 5. Return EXACTLY $lineCount items in the array
 6. If uncertain, provide best approximation but maintain line count"""
+            } else {
+                """You are a precise lyrics translation assistant. Your output must ALWAYS be a valid JSON array of strings.
+
+CRITICAL RULES:
+1. Output ONLY a JSON array: ["line1", "line2", "line3"]
+2. NO explanations, NO questions, NO additional text
+3. Each input line maps to exactly one output line
+4. Preserve empty lines as empty strings ""
+5. Return EXACTLY $lineCount items in the array
+6. If uncertain, provide best approximation but maintain line count"""
+            }
 
             val userPrompt = when (mode) {
                 "Transcribed" -> """Transcribe/transliterate the following $lineCount lines phonetically into $targetLanguage script.

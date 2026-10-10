@@ -157,6 +157,7 @@ import com.music.vivi.constants.LyricsTextPositionKey
 import com.music.vivi.constants.LyricsTextSizeKey
 import com.music.vivi.constants.PlayerBackgroundStyle
 import com.music.vivi.constants.OpenRouterApiKey
+import com.music.vivi.constants.CustomAiPromptKey
 import com.music.vivi.constants.DeeplApiKey
 import com.music.vivi.constants.AiProviderKey
 import com.music.vivi.constants.OpenRouterBaseUrlKey
@@ -279,6 +280,7 @@ fun Lyrics(
     val translateLanguage by rememberPreference(TranslateLanguageKey, "en")
     val translateMode by rememberPreference(TranslateModeKey, "Literal")
     val deeplFormality by rememberPreference(DeeplFormalityKey, "default")
+    val customAiPrompt by rememberPreference(CustomAiPromptKey, "")
     
     val scope = rememberCoroutineScope()
 
@@ -528,7 +530,8 @@ fun Lyrics(
                     deeplFormality = deeplFormality,
                     useStreaming = true,
                     songId = currentSong?.id ?: "",
-                    database = database
+                    database = database,
+                    customAiPrompt = customAiPrompt
                 )
             } else if (effectiveApiKey.isBlank()) {
                 Toast.makeText(context, context.getString(R.string.ai_api_key_required), Toast.LENGTH_SHORT).show()

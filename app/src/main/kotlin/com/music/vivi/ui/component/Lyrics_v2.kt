@@ -220,6 +220,7 @@ fun LyricsV2(
     val translateLanguage by rememberPreference(TranslateLanguageKey, "en")
     val translateMode by rememberPreference(TranslateModeKey, "Literal")
     val deeplFormality by rememberPreference(DeeplFormalityKey, "default")
+    val customAiPrompt by rememberPreference(CustomAiPromptKey, "")
 
     val translationStatus by LyricsTranslationHelper.status.collectAsState()
     val hasActiveTranslations by LyricsTranslationHelper.hasActiveTranslations.collectAsState()
@@ -442,7 +443,8 @@ fun LyricsV2(
                                 deeplFormality = deeplFormality,
                                 useStreaming = true,
                                 songId = mediaMetadata?.id ?: "",
-                                database = database
+                                database = database,
+                                customAiPrompt = customAiPrompt
                             )
                         } else if (effectiveApiKey.isBlank()) {
                             Toast.makeText(context, context.getString(R.string.ai_api_key_required), Toast.LENGTH_SHORT).show()

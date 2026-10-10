@@ -1,6 +1,6 @@
 [versions]
 vico = "3.1.0-alpha.3"
-androidGradlePlugin = "9.1.1"
+androidGradlePlugin = "9.4.1"
 json = "20260522"
 kotlin = "2.3.10"
 compose = "1.11.4"

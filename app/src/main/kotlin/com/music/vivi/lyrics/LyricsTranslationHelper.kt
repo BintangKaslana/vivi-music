@@ -229,6 +229,7 @@ object LyricsTranslationHelper {
         useStreaming: Boolean = true,
         songId: String = "",
         database: MusicDatabase? = null,
+        customAiPrompt: String = "",
     ) {
         translationJob?.cancel()
         _status.value = TranslationStatus.Translating
@@ -349,6 +350,7 @@ object LyricsTranslationHelper {
                         baseUrl = baseUrl,
                         model = model,
                         mode = mode,
+                        customAiPrompt = customAiPrompt,
                     ).collect { chunk ->
                         Timber.v("Received streaming chunk: $chunk")
                         when (chunk) {
@@ -396,6 +398,7 @@ object LyricsTranslationHelper {
                         baseUrl = baseUrl,
                         model = model,
                         mode = mode,
+                        customAiPrompt = customAiPrompt,
                     )
                 }
 
