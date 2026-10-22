@@ -140,6 +140,10 @@ val AudioTrackPlaybackParamsKey = booleanPreferencesKey("audioTrackPlaybackParam
 val EnableSaavnStreamingKey = booleanPreferencesKey("enableSaavnStreaming")
 val SaavnAudioQualityKey    = stringPreferencesKey("saavnAudioQuality")
 
+// NetEase streaming
+val EnableNeteaseStreamingKey = booleanPreferencesKey("enableNeteaseStreaming")
+val NeteaseAudioQualityKey    = stringPreferencesKey("neteaseAudioQuality")
+
 // SponsorBlock settings
 val EnableSponsorBlockKey = booleanPreferencesKey("enableSponsorBlock")
 val SponsorBlockServerUrlKey = stringPreferencesKey("sponsorBlockServerUrl")
@@ -182,6 +186,24 @@ enum class SaavnAudioQuality {
         QUALITY_320 -> "High (320 kbps)"
         QUALITY_160 -> "Medium (160 kbps)"
         QUALITY_96  -> "Low (96 kbps)"
+    }
+}
+
+enum class NeteaseAudioQuality {
+    LOSSLESS,
+    QUALITY_320,
+    QUALITY_128;
+
+    fun toApiValue() = when (this) {
+        LOSSLESS    -> "lossless"
+        QUALITY_320 -> "exhigh"
+        QUALITY_128 -> "standard"
+    }
+
+    fun toLabel() = when (this) {
+        LOSSLESS    -> "FLAC / Lossless"
+        QUALITY_320 -> "High (320 kbps)"
+        QUALITY_128 -> "Standard (128 kbps)"
     }
 }
 

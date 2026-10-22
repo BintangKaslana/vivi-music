@@ -410,6 +410,11 @@
     <string name="saavn_audio_quality">JioSaavn Audio Quality</string>
     <string name="retry_stream">Retry Stream</string>
     <string name="retry_stream_desc_saavn">Re-fetch from JioSaavn at 320 kbps</string>
+
+    <!-- NetEase Streaming -->
+    <string name="enable_netease_streaming">Enable NetEase Streaming</string>
+    <string name="enable_netease_streaming_desc">Stream audio from NetEase Cloud Music instead of YouTube Music (falls back to YT if not available)</string>
+    <string name="netease_audio_quality">NetEase Audio Quality</string>
     <string name="retry_stream_desc_yt">Re-fetch from YouTube Music</string>
 
     <!-- Dynamic Search Prompts -->

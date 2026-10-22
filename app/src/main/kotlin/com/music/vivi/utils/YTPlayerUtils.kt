@@ -29,6 +29,9 @@ import com.music.vivi.constants.AudioQuality
 import com.music.vivi.constants.EnableSaavnStreamingKey
 import com.music.vivi.constants.SaavnAudioQuality
 import com.music.vivi.constants.SaavnAudioQualityKey
+import com.music.vivi.constants.EnableNeteaseStreamingKey
+import com.music.vivi.constants.NeteaseAudioQuality
+import com.music.vivi.constants.NeteaseAudioQualityKey
 import com.music.vivi.utils.cipher.CipherDeobfuscator
 import com.music.vivi.utils.sabr.EjsNTransformSolver
 import com.music.vivi.utils.PlaybackLogLevel
@@ -39,6 +42,7 @@ import com.music.innertube.models.YouTubeClient.Companion.VISIONOS
 import com.music.innertube.strategy.ContentAwareFallbackStrategy
 import com.music.innertube.strategy.ContentHints
 import com.music.jiosaavn.SaavnService
+import com.music.netease.NeteaseService
 import okhttp3.Dns
 import okhttp3.OkHttpClient
 import timber.log.Timber
@@ -345,6 +349,155 @@ object YTPlayerUtils {
             }
         }
         // ── End JioSaavn intercept ───────────────────────────────────────────
+
+        // ── NetEase intercept ───────────────────────────────────────────────
+        if (context != null) {
+            val neteaseEnabled = context.dataStore.get(EnableNeteaseStreamingKey, false)
+            if (neteaseEnabled) {
+                Timber.tag(TAG).d("NetEase streaming enabled — trying NetEase for videoId=$videoId")
+                val neteaseResult = runCatching {
+                    val (currentSong, meta) = coroutineScope {
+                        val nextDeferred = async {
+                            val nextResult = YouTube.next(WatchEndpoint(videoId = videoId)).getOrNull()
+                            nextResult?.items?.getOrNull(nextResult.currentIndex ?: 0)
+                                ?: nextResult?.items?.firstOrNull()
+                        }
+                        val metaDeferred = async {
+                            playerResponseForMetadata(videoId, playlistId).getOrNull()
+                        }
+                        nextDeferred.await() to metaDeferred.await()
+                    }
+
+                    val title = currentSong?.title ?: meta?.videoDetails?.title.orEmpty()
+                    val artistNames: List<String> = if (currentSong?.artists?.isNotEmpty() == true) {
+                        currentSong.artists.map { it.name }
+                    } else {
+                        listOf(meta?.videoDetails?.author.orEmpty()).filter { it.isNotBlank() }
+                    }
+                    val artist = artistNames.joinToString(", ")
+
+                    if (title.isBlank()) return@runCatching null
+
+                    val expectedDurationSec = meta?.videoDetails?.lengthSeconds?.toLongOrNull()
+
+                    val cleanTitle = NeteaseService.sanitizeQuery(title)
+                    val cleanArtist = NeteaseService.sanitizeQuery(artist)
+
+                    val primaryQuery = "$cleanTitle $cleanArtist".trim()
+                    val sekaiFallbackQuery = "$cleanTitle Project SEKAI".trim()
+                    val titleOnlyQuery = cleanTitle
+
+                    suspend fun searchAndMatch(query: String): com.music.netease.NeteaseSong? {
+                        if (query.isBlank()) return null
+                        Timber.tag(TAG).d("NetEase: searching with query: \"$query\"")
+                        val songs = NeteaseService.searchSongs(query).getOrNull() ?: return null
+
+                        val wantedTitleLower = title.lowercase(java.util.Locale.US).trim()
+                        val wantedArtistsLower = artistNames.map { it.lowercase(java.util.Locale.US).trim() }
+
+                        return songs.firstOrNull { candidate ->
+                            val candidateTitleLower = candidate.name.lowercase(java.util.Locale.US).trim()
+                            val candidateArtists = candidate.effectiveArtists.map { it.name.lowercase(java.util.Locale.US).trim() }
+
+                            val titleMatches = candidateTitleLower == wantedTitleLower ||
+                                    candidateTitleLower.contains(wantedTitleLower) ||
+                                    wantedTitleLower.contains(candidateTitleLower)
+
+                            val artistIntersection = candidateArtists.intersect(wantedArtistsLower.toSet())
+                            val artistMatches = artistIntersection.isNotEmpty() || candidateArtists.isEmpty()
+
+                            val candDurationSec = candidate.effectiveDurationMs / 1000
+                            val durationMatches = if (expectedDurationSec != null && candDurationSec > 0) {
+                                java.lang.Math.abs(expectedDurationSec - candDurationSec) <= 15
+                            } else {
+                                true
+                            }
+
+                            titleMatches && (artistMatches || durationMatches)
+                        } ?: songs.firstOrNull()
+                    }
+
+                    var matchedSong = searchAndMatch(primaryQuery)
+                    if (matchedSong == null && sekaiFallbackQuery != primaryQuery) {
+                        Timber.tag(TAG).d("NetEase: primary query failed, trying Project SEKAI fallback: \"$sekaiFallbackQuery\"")
+                        matchedSong = searchAndMatch(sekaiFallbackQuery)
+                    }
+                    if (matchedSong == null && titleOnlyQuery != cleanTitle && titleOnlyQuery != primaryQuery) {
+                        Timber.tag(TAG).d("NetEase: secondary fallback trying title only: \"$titleOnlyQuery\"")
+                        matchedSong = searchAndMatch(titleOnlyQuery)
+                    }
+
+                    if (matchedSong == null) {
+                        Timber.tag(TAG).d("NetEase: no match found on NetEase — falling back to YT")
+                        return@runCatching null
+                    }
+
+                    Timber.tag(TAG).i("NetEase: matched \"${matchedSong.name}\" (id=${matchedSong.id})")
+
+                    val qualityKey = context.dataStore.get(NeteaseAudioQualityKey, NeteaseAudioQuality.LOSSLESS.name)
+                    val quality = runCatching { NeteaseAudioQuality.valueOf(qualityKey) }
+                        .getOrDefault(NeteaseAudioQuality.LOSSLESS)
+
+                    val streamItem = NeteaseService.getStreamUrl(matchedSong.id, quality.toApiValue())
+                    val streamUrl = streamItem?.url
+
+                    if (streamUrl.isNullOrBlank()) {
+                        Timber.tag(TAG).d("NetEase: no stream URL for songId=${matchedSong.id} — falling back to YT")
+                        return@runCatching null
+                    }
+
+                    val contentLength = streamItem.size.takeIf { it > 0 }
+                        ?: NeteaseService.getContentLength(streamUrl)
+
+                    val isFlac = streamItem.type.equals("flac", ignoreCase = true) || streamUrl.contains(".flac", ignoreCase = true)
+                    val mimeType = if (isFlac) "audio/flac" else "audio/mpeg"
+
+                    Timber.tag(TAG).i("NetEase: streaming from NetEase (level=${quality.toApiValue()}, type=${streamItem.type}) resolved contentLength=$contentLength")
+
+                    InnerTubeXPlayer.PlaybackData(
+                        audioConfig      = meta?.playerConfig?.audioConfig,
+                        videoDetails     = meta?.videoDetails,
+                        playbackTracking = meta?.playbackTracking,
+                        format           = PlayerResponse.StreamingData.Format(
+                            itag             = if (isFlac) 142 else 141,
+                            url              = streamUrl,
+                            mimeType         = mimeType,
+                            bitrate          = streamItem.br.toInt().takeIf { it > 0 } ?: 320_000,
+                            width            = null,
+                            height           = null,
+                            contentLength    = contentLength,
+                            quality          = quality.toApiValue(),
+                            fps              = null,
+                            qualityLabel     = null,
+                            averageBitrate   = null,
+                            audioQuality     = quality.toApiValue(),
+                            approxDurationMs = null,
+                            audioSampleRate  = null,
+                            audioChannels    = null,
+                            loudnessDb       = null,
+                            lastModified     = null,
+                            signatureCipher  = null,
+                            cipher           = null,
+                            audioTrack       = null,
+                        ),
+                        streamUrl              = streamUrl,
+                        streamExpiresInSeconds = 3600,
+                        streamClient           = "NetEase",
+                        streamHeaders          = mapOf("Referer" to "https://music.163.com/"),
+                        requireBoundedRange    = false,
+                        rangeChunkSizeBytes    = 0L,
+                        useRangeChunks         = false,
+                        isSaavnStream          = true, // reuse non-YT direct stream behavior for downloads
+                    )
+                }.getOrNull()
+
+                if (neteaseResult != null) {
+                    return Result.success(neteaseResult)
+                }
+                Timber.tag(TAG).d("NetEase intercept failed or returned null — falling back to YouTube")
+            }
+        }
+        // ── End NetEase intercept ───────────────────────────────────────────
 
         val firstAttempt = resolvePlaybackData(videoId, playlistId, audioQuality, connectivityManager, contentHints)
         

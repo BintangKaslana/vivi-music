@@ -1,11 +1,12 @@
 plugins {
     id("com.android.library")
+    id("org.jetbrains.kotlin.android")
     alias(libs.plugins.kotlin.serialization)
 }
 
 android {
     namespace = "com.music.innertube"
-    compileSdk = 37
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 26

@@ -18,13 +18,21 @@ buildscript {
     }
 }
 
-tasks.register<Delete>("clean") {
-    delete(rootProject.layout.buildDirectory)
+if (tasks.findByName("clean") == null) {
+    tasks.register<Delete>("clean") {
+        delete(rootProject.layout.buildDirectory)
+    }
 }
 
 subprojects {
+    afterEvaluate {
+        tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+            enabled = false
+        }
+    }
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions {
+            freeCompilerArgs.add("-Xskip-metadata-version-check")
             if (project.findProperty("enableComposeCompilerReports") == "true") {
                 arrayOf("reports", "metrics").forEach {
                     freeCompilerArgs.add("-P")

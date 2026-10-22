@@ -1,8 +1,8 @@
 [versions]
 vico = "3.1.0-alpha.3"
-androidGradlePlugin = "9.4.1"
-json = "20260522"
-kotlin = "2.3.10"
+androidGradlePlugin = "8.13.2"
+json = "20240303"
+kotlin = "2.1.10"
 compose = "1.11.4"
 lifecycle = "2.10.0"
 material3 = "1.5.0-alpha27"
@@ -11,10 +11,10 @@ appcompat = "1.7.1"
 media3 = "1.7.1"
 mediarouter = "1.8.1"
 castFramework = "22.2.0"
-room = "2.8.4"
-hilt = "2.60.1"
+room = "2.7.2"
+hilt = "2.55"
 ktor = "3.4.0"
-ksp = "2.3.6"
+ksp = "2.1.10-1.0.31"
 jsoup = "1.22.1"
 coil = "3.3.0"
 ucrop = "2.2.11"
@@ -53,6 +53,7 @@ coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", 
 concurrent-futures = { module = "androidx.concurrent:concurrent-futures-ktx", version.ref = "concurrentFutures" }
 
 gradle = { module = "com.android.tools.build:gradle", version.ref = "androidGradlePlugin" }
+serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.7.3" }
 activity = { module = "androidx.activity:activity-compose", version.ref = "activity" }
 hilt-navigation = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigation" }
 datastore = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
@@ -143,6 +144,7 @@ expressivelab = { module = "com.github.mohdamaan1:JustForPixel-ExpressiveLab", v
 
 
 [plugins]
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

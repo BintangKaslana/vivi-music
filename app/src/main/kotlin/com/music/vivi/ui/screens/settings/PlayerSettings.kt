@@ -47,6 +47,9 @@ import com.music.vivi.constants.AudioQualityKey
 import com.music.vivi.constants.EnableSaavnStreamingKey
 import com.music.vivi.constants.SaavnAudioQuality
 import com.music.vivi.constants.SaavnAudioQualityKey
+import com.music.vivi.constants.EnableNeteaseStreamingKey
+import com.music.vivi.constants.NeteaseAudioQuality
+import com.music.vivi.constants.NeteaseAudioQualityKey
 import com.music.vivi.constants.AutoDownloadOnLikeKey
 import com.music.vivi.constants.CrossfadeCurve
 import com.music.vivi.constants.CrossfadeCurveKey
@@ -221,6 +224,14 @@ fun PlayerSettings(
         SaavnAudioQualityKey,
         defaultValue = SaavnAudioQuality.QUALITY_320
     )
+    val (neteaseEnabled, _) = rememberPreference(
+        EnableNeteaseStreamingKey,
+        defaultValue = false
+    )
+    val (neteaseQuality, _) = rememberEnumPreference(
+        NeteaseAudioQualityKey,
+        defaultValue = NeteaseAudioQuality.LOSSLESS
+    )
     val (sponsorBlockEnabled, _) = rememberPreference(
         EnableSponsorBlockKey,
         defaultValue = true
@@ -360,6 +371,21 @@ fun PlayerSettings(
                         )
                     },
                     onClick = { navController.navigate("settings/player/jio") }
+                ))
+                // NetEase settings navigation
+                add(Material3SettingsItem(
+                    icon = painterResource(R.drawable.graphic_eq),
+                    title = { Text(stringResource(R.string.netease_settings)) },
+                    trailingContent = {
+                        Text(
+                            if (neteaseEnabled) {
+                                neteaseQuality.toLabel()
+                            } else {
+                                stringResource(R.string.netease_streaming_disabled)
+                            }
+                        )
+                    },
+                    onClick = { navController.navigate("settings/player/netease") }
                 ))
                 // SponsorBlock settings navigation
                 add(Material3SettingsItem(

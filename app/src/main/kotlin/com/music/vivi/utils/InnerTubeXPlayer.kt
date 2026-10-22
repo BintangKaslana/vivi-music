@@ -50,6 +50,7 @@ import timber.log.Timber
 import kotlin.time.Clock
 
 /** The sole stream extraction entry point for the Android app using innertubex back-end. */
+@OptIn(kotlin.time.ExperimentalTime::class)
 object InnerTubeXPlayer {
     private const val TAG = "InnerTubeXPlayer"
     private const val WEB_REMIX_FAILURE_TTL_MS = 5 * 60 * 1000L

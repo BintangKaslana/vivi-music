@@ -9,6 +9,7 @@ if (localPropertiesFile.exists()) {
 }
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.compose.compiler)
@@ -18,7 +19,7 @@ plugins {
 
 android {
     namespace = "com.music.vivi"
-    compileSdk = 37
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
@@ -289,6 +290,7 @@ dependencies {
     implementation(project(":shazamkit"))
     implementation(project(":artistvideo"))
     implementation(project(":jiosaavn"))
+    implementation(project(":netease"))
     implementation(project(":spotify"))
     implementation(project(":lyricsProvider"))
 
@@ -302,6 +304,7 @@ dependencies {
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.json)
+    implementation(libs.serialization.json)
 
     // Protobuf for message serialization (lite version for Android)
     implementation(libs.protobuf.javalite)

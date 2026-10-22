@@ -53,6 +53,7 @@ import com.music.vivi.ui.screens.settings.DarkMode
 import com.music.vivi.ui.screens.settings.DiscordLoginScreen
 import com.music.vivi.ui.screens.settings.PlayerSettings
 import com.music.vivi.ui.screens.settings.JioSettings
+import com.music.vivi.ui.screens.settings.NeteaseSettings
 import com.music.vivi.ui.screens.settings.SponsorBlockSettings
 import com.music.vivi.ui.screens.settings.PrivacySettings
 import com.music.vivi.ui.screens.settings.RomanizationSettings
@@ -401,6 +402,10 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/player/jio") {
         JioSettings(navController, scrollBehavior)
+    }
+
+    composable("settings/player/netease") {
+        NeteaseSettings(navController, scrollBehavior)
     }
 
     composable("settings/player/sponsorblock") {

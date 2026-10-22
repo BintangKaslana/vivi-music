@@ -1006,6 +1006,9 @@
     <string name="jiosaavn_settings">JioSaavn Settings</string>
     <string name="jiosaavn_streaming_disabled">Disabled</string>
     <string name="jiosaavn_beta_info">This is currently in beta, don\'t report things based on JioSaavn. If JioSaavn is enabled and a song isn\'t available in JioSaavn, it will use YouTube Music as the next source. Downloading at 320 kbps is also supported when using JioSaavn.</string>
+    <string name="netease_settings">NetEase Settings</string>
+    <string name="netease_streaming_disabled">Disabled</string>
+    <string name="netease_beta_info">NetEase Cloud Music streaming searches and matches tracks automatically. If a track is unavailable or fails to stream, it will automatically fall back to YouTube Music.</string>
 
     <!-- Spotify Import -->
     <string name="spotify">Spotify</string>
